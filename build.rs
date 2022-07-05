@@ -3,6 +3,7 @@
 #[cfg(feature = "generate_binding")]
 use std::path::PathBuf;
 use std::{env, fmt::Display, path::Path};
+use cmake::Config;
 
 /// Outputs the library-file's prefix as word usable for actual arguments on
 /// commands or paths.
@@ -47,7 +48,9 @@ fn build_opus(is_static: bool) {
     );
 
     println!("cargo:info=Building Opus via CMake.");
-    let opus_build_dir = cmake::build(opus_path);
+    let opus_build_dir = Config::new(opus_path).configure_arg("-DOPUS_CUSTOM_MODES=ON").configure_arg("-DOPUS_FLOAT_APPROX=ON").configure_arg("-DOPUS_FAST_MATH=ON").configure_arg("-DOPUS_X86_PRESUME_SSE4_1=ON").build();
+
+    //let opus_build_dir = cmake::build(opus_path);
     link_opus(is_static, opus_build_dir.display())
 }
 

@@ -1236,16 +1236,220 @@ extern "C" {
     #[doc = " @param st <tt>OpusMSDecoder</tt>: Multistream decoder state to be freed."]
     pub fn opus_multistream_decoder_destroy(st: *mut OpusMSDecoder);
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn access_symbols() {
-        unsafe {
-            opus_get_version_string();
-            opus_encoder_get_size(0);
-        }
-    }
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct OpusCustomEncoder {
+    _unused: [u8; 0],
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct OpusCustomDecoder {
+    _unused: [u8; 0],
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct OpusCustomMode {
+    _unused: [u8; 0],
+}
+extern "C" {
+    #[doc = " Creates a new mode struct. This will be passed to an encoder or"]
+    #[doc = " decoder. The mode MUST NOT BE DESTROYED until the encoders and"]
+    #[doc = " decoders that use it are destroyed as well."]
+    #[doc = " @param [in] Fs <tt>int</tt>: Sampling rate (8000 to 96000 Hz)"]
+    #[doc = " @param [in] frame_size <tt>int</tt>: Number of samples (per channel) to encode in each"]
+    #[doc = "        packet (64 - 1024, prime factorization must contain zero or more 2s, 3s, or 5s and no other primes)"]
+    #[doc = " @param [out] error <tt>int*</tt>: Returned error code (if NULL, no error will be returned)"]
+    #[doc = " @return A newly created mode"]
+    pub fn opus_custom_mode_create(
+        Fs: opus_int32,
+        frame_size: ::std::os::raw::c_int,
+        error: *mut ::std::os::raw::c_int,
+    ) -> *mut OpusCustomMode;
+}
+extern "C" {
+    #[doc = " Destroys a mode struct. Only call this after all encoders and"]
+    #[doc = " decoders using this mode are destroyed as well."]
+    #[doc = " @param [in] mode <tt>OpusCustomMode*</tt>: Mode to be freed."]
+    pub fn opus_custom_mode_destroy(mode: *mut OpusCustomMode);
+}
+extern "C" {
+    #[doc = " Gets the size of an OpusCustomEncoder structure."]
+    #[doc = " @param [in] mode <tt>OpusCustomMode *</tt>: Mode configuration"]
+    #[doc = " @param [in] channels <tt>int</tt>: Number of channels"]
+    #[doc = " @returns size"]
+    pub fn opus_custom_encoder_get_size(
+        mode: *const OpusCustomMode,
+        channels: ::std::os::raw::c_int,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[doc = " Creates a new encoder state. Each stream needs its own encoder"]
+    #[doc = " state (can't be shared across simultaneous streams)."]
+    #[doc = " @param [in] mode <tt>OpusCustomMode*</tt>: Contains all the information about the characteristics of"]
+    #[doc = "  the stream (must be the same characteristics as used for the"]
+    #[doc = "  decoder)"]
+    #[doc = " @param [in] channels <tt>int</tt>: Number of channels"]
+    #[doc = " @param [out] error <tt>int*</tt>: Returns an error code"]
+    #[doc = " @return Newly created encoder state."]
+    pub fn opus_custom_encoder_create(
+        mode: *const OpusCustomMode,
+        channels: ::std::os::raw::c_int,
+        error: *mut ::std::os::raw::c_int,
+    ) -> *mut OpusCustomEncoder;
+}
+extern "C" {
+    #[doc = " Destroys an encoder state."]
+    #[doc = " @param[in] st <tt>OpusCustomEncoder*</tt>: State to be freed."]
+    pub fn opus_custom_encoder_destroy(st: *mut OpusCustomEncoder);
+}
+extern "C" {
+    #[doc = " Encodes a frame of audio."]
+    #[doc = " @param [in] st <tt>OpusCustomEncoder*</tt>: Encoder state"]
+    #[doc = " @param [in] pcm <tt>float*</tt>: PCM audio in float format, with a normal range of +/-1.0."]
+    #[doc = "          Samples with a range beyond +/-1.0 are supported but will"]
+    #[doc = "          be clipped by decoders using the integer API and should"]
+    #[doc = "          only be used if it is known that the far end supports"]
+    #[doc = "          extended dynamic range. There must be exactly"]
+    #[doc = "          frame_size samples per channel."]
+    #[doc = " @param [in] frame_size <tt>int</tt>: Number of samples per frame of input signal"]
+    #[doc = " @param [out] compressed <tt>char *</tt>: The compressed data is written here. This may not alias pcm and must be at least maxCompressedBytes long."]
+    #[doc = " @param [in] maxCompressedBytes <tt>int</tt>: Maximum number of bytes to use for compressing the frame"]
+    #[doc = "          (can change from one frame to another)"]
+    #[doc = " @return Number of bytes written to \"compressed\"."]
+    #[doc = "       If negative, an error has occurred (see error codes). It is IMPORTANT that"]
+    #[doc = "       the length returned be somehow transmitted to the decoder. Otherwise, no"]
+    #[doc = "       decoding is possible."]
+    pub fn opus_custom_encode_float(
+        st: *mut OpusCustomEncoder,
+        pcm: *const f32,
+        frame_size: ::std::os::raw::c_int,
+        compressed: *mut ::std::os::raw::c_uchar,
+        maxCompressedBytes: ::std::os::raw::c_int,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[doc = " Encodes a frame of audio."]
+    #[doc = " @param [in] st <tt>OpusCustomEncoder*</tt>: Encoder state"]
+    #[doc = " @param [in] pcm <tt>opus_int16*</tt>: PCM audio in signed 16-bit format (native endian)."]
+    #[doc = "          There must be exactly frame_size samples per channel."]
+    #[doc = " @param [in] frame_size <tt>int</tt>: Number of samples per frame of input signal"]
+    #[doc = " @param [out] compressed <tt>char *</tt>: The compressed data is written here. This may not alias pcm and must be at least maxCompressedBytes long."]
+    #[doc = " @param [in] maxCompressedBytes <tt>int</tt>: Maximum number of bytes to use for compressing the frame"]
+    #[doc = "          (can change from one frame to another)"]
+    #[doc = " @return Number of bytes written to \"compressed\"."]
+    #[doc = "       If negative, an error has occurred (see error codes). It is IMPORTANT that"]
+    #[doc = "       the length returned be somehow transmitted to the decoder. Otherwise, no"]
+    #[doc = "       decoding is possible."]
+    pub fn opus_custom_encode(
+        st: *mut OpusCustomEncoder,
+        pcm: *const opus_int16,
+        frame_size: ::std::os::raw::c_int,
+        compressed: *mut ::std::os::raw::c_uchar,
+        maxCompressedBytes: ::std::os::raw::c_int,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[doc = " Perform a CTL function on an Opus custom encoder."]
+    #[doc = ""]
+    #[doc = " Generally the request and subsequent arguments are generated"]
+    #[doc = " by a convenience macro."]
+    #[doc = " @see opus_encoderctls"]
+    pub fn opus_custom_encoder_ctl(
+        st: *mut OpusCustomEncoder,
+        request: ::std::os::raw::c_int,
+        ...
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[doc = " Gets the size of an OpusCustomDecoder structure."]
+    #[doc = " @param [in] mode <tt>OpusCustomMode *</tt>: Mode configuration"]
+    #[doc = " @param [in] channels <tt>int</tt>: Number of channels"]
+    #[doc = " @returns size"]
+    pub fn opus_custom_decoder_get_size(
+        mode: *const OpusCustomMode,
+        channels: ::std::os::raw::c_int,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[doc = " Initializes a previously allocated decoder state"]
+    #[doc = " The memory pointed to by st must be the size returned by opus_custom_decoder_get_size."]
+    #[doc = " This is intended for applications which use their own allocator instead of malloc."]
+    #[doc = " @see opus_custom_decoder_create(),opus_custom_decoder_get_size()"]
+    #[doc = " To reset a previously initialized state use the OPUS_RESET_STATE CTL."]
+    #[doc = " @param [in] st <tt>OpusCustomDecoder*</tt>: Decoder state"]
+    #[doc = " @param [in] mode <tt>OpusCustomMode *</tt>: Contains all the information about the characteristics of"]
+    #[doc = "  the stream (must be the same characteristics as used for the"]
+    #[doc = "  encoder)"]
+    #[doc = " @param [in] channels <tt>int</tt>: Number of channels"]
+    #[doc = " @return OPUS_OK Success or @ref opus_errorcodes"]
+    pub fn opus_custom_decoder_init(
+        st: *mut OpusCustomDecoder,
+        mode: *const OpusCustomMode,
+        channels: ::std::os::raw::c_int,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[doc = " Creates a new decoder state. Each stream needs its own decoder state (can't"]
+    #[doc = " be shared across simultaneous streams)."]
+    #[doc = " @param [in] mode <tt>OpusCustomMode</tt>: Contains all the information about the characteristics of the"]
+    #[doc = "          stream (must be the same characteristics as used for the encoder)"]
+    #[doc = " @param [in] channels <tt>int</tt>: Number of channels"]
+    #[doc = " @param [out] error <tt>int*</tt>: Returns an error code"]
+    #[doc = " @return Newly created decoder state."]
+    pub fn opus_custom_decoder_create(
+        mode: *const OpusCustomMode,
+        channels: ::std::os::raw::c_int,
+        error: *mut ::std::os::raw::c_int,
+    ) -> *mut OpusCustomDecoder;
+}
+extern "C" {
+    #[doc = " Destroys a decoder state."]
+    #[doc = " @param[in] st <tt>OpusCustomDecoder*</tt>: State to be freed."]
+    pub fn opus_custom_decoder_destroy(st: *mut OpusCustomDecoder);
+}
+extern "C" {
+    #[doc = " Decode an opus custom frame with floating point output"]
+    #[doc = " @param [in] st <tt>OpusCustomDecoder*</tt>: Decoder state"]
+    #[doc = " @param [in] data <tt>char*</tt>: Input payload. Use a NULL pointer to indicate packet loss"]
+    #[doc = " @param [in] len <tt>int</tt>: Number of bytes in payload"]
+    #[doc = " @param [out] pcm <tt>float*</tt>: Output signal (interleaved if 2 channels). length"]
+    #[doc = "  is frame_size*channels*sizeof(float)"]
+    #[doc = " @param [in] frame_size Number of samples per channel of available space in *pcm."]
+    #[doc = " @returns Number of decoded samples or @ref opus_errorcodes"]
+    pub fn opus_custom_decode_float(
+        st: *mut OpusCustomDecoder,
+        data: *const ::std::os::raw::c_uchar,
+        len: ::std::os::raw::c_int,
+        pcm: *mut f32,
+        frame_size: ::std::os::raw::c_int,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[doc = " Decode an opus custom frame"]
+    #[doc = " @param [in] st <tt>OpusCustomDecoder*</tt>: Decoder state"]
+    #[doc = " @param [in] data <tt>char*</tt>: Input payload. Use a NULL pointer to indicate packet loss"]
+    #[doc = " @param [in] len <tt>int</tt>: Number of bytes in payload"]
+    #[doc = " @param [out] pcm <tt>opus_int16*</tt>: Output signal (interleaved if 2 channels). length"]
+    #[doc = "  is frame_size*channels*sizeof(opus_int16)"]
+    #[doc = " @param [in] frame_size Number of samples per channel of available space in *pcm."]
+    #[doc = " @returns Number of decoded samples or @ref opus_errorcodes"]
+    pub fn opus_custom_decode(
+        st: *mut OpusCustomDecoder,
+        data: *const ::std::os::raw::c_uchar,
+        len: ::std::os::raw::c_int,
+        pcm: *mut opus_int16,
+        frame_size: ::std::os::raw::c_int,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[doc = " Perform a CTL function on an Opus custom decoder."]
+    #[doc = ""]
+    #[doc = " Generally the request and subsequent arguments are generated"]
+    #[doc = " by a convenience macro."]
+    #[doc = " @see opus_genericctls"]
+    pub fn opus_custom_decoder_ctl(
+        st: *mut OpusCustomDecoder,
+        request: ::std::os::raw::c_int,
+        ...
+    ) -> ::std::os::raw::c_int;
 }
